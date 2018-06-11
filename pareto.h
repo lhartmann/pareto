@@ -42,29 +42,35 @@ bool pareto_dominant(
 
 /// Returns true if x1 is pareto-dominanted by any of the others.
 template <class T>
-bool pareto_dominated(
+size_t pareto_dominated(
 	const T &x1,
 	const std::vector<T> &others,
 	const std::vector< std::function<double(const T &)> > objectives
 ) {
+	size_t r = 0;
 	for (auto &x2 : others)
 		if (pareto_dominant(x2,x1,objectives))
-			return true;
+			r++;
 	
-	return false;
+	return r;
 }
 
 /// Returns a vector containing pareto frontier elements.
+#include <boost/range/adaptor/reversed.hpp>
 template <class T>
 std::vector<T> pareto_frontier(
 	const std::vector<T> &src,
 	std::vector< std::function<double(const T &)> > objectives
 ) {
-	std::vector<T> ret;
-	
-	// This will actually compare x1 to itselt, but that's not an issue.
+	std::vector<T> tmp;
 	for (auto &x1 : src) {
-		if (!pareto_dominated(x1, src, objectives))
+		if (!pareto_dominated(x1, tmp, objectives))
+			tmp.push_back(x1);
+	}
+	
+	std::vector<T> ret;
+	for (auto &x1 : boost::adaptors::reverse(tmp)) {
+		if (!pareto_dominated(x1, ret, objectives))
 			ret.push_back(x1);
 	}
 	
